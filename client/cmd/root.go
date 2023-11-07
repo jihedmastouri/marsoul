@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -8,13 +8,14 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:       "marsoul [save <file> | retrieve <file-id>]",
-	Short:     "Useless file transfer system.",
-	Long:      "A file transer system similar to QbitTorrent",
+	Use:   "marsoul",
+	Short: "Useless file transfer system.",
+	Long: `A file transer system similar to QbitTorrent
+	marsoul [save <file> | retr <file-id>]
+	`,
 	Example:   "",
 	ValidArgs: []string{},
 	Version:   "v0.0.0",
-	Run:       func(cmd *cobra.Command, args []string) {},
 }
 
 func Execute() {
@@ -24,6 +25,7 @@ func Execute() {
 	}
 }
 
-func Init() {
+func init() {
 	rootCmd.AddCommand(saveCmd, retrCmd)
+	saveCmd.Flags().StringP("file-path", "f", "", "a relative or an absolute path for a file")
 }
