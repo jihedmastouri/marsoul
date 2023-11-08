@@ -1,10 +1,9 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
-	"os/user"
-	"path/filepath"
 	"strings"
 
 	"github.com/jihedmastouri/marsoul/client/internal"
@@ -19,9 +18,34 @@ var initCmd = &cobra.Command{
 	`,
 	Example: "",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			fmt.Fprintln(os.Stderr, "No resolvers passed as args")
+		filePath, err := cmd.Flags().GetString("file-path")
+
+		if len(args) == 0 && err != nil {
+			if len(args) == 0 {
+				fmt.Fprintln(os.Stderr, "No resolvers passed as args or as file")
+				os.Exit(1)
+			}
+			fmt.Fprintln(os.Stderr, "Reading file-path failed with: ", err)
 			os.Exit(1)
+		}
+
+		if filePath != "" {
+			providedFile, err := os.Open(filePath)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Opening file failed with: ", err)
+				os.Exit(1)
+			}
+			defer providedFile.Close()
+			scanner := bufio.NewScanner(providedFile)
+			for scanner.Scan() {
+				line := scanner.Text()
+				args = append(args, line)
+			}
+			if err := scanner.Err(); err != nil {
+				fmt.Fprintln(os.Stderr, "Reading file content failed with: ", err)
+				os.Exit(1)
+			}
+
 		}
 
 		if valid, addrs := internal.ValidateAdrs(args...); !valid {
@@ -29,24 +53,7 @@ var initCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		usr, err := user.Current()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Getting User failed with: ", err)
-			os.Exit(1)
-		}
-
-		configPath := filepath.Join(usr.HomeDir, ".marsoul")
-
-		if err = os.Mkdir(configPath, 0775); err != nil && !os.IsExist(err) {
-			fmt.Fprintln(os.Stderr, "Creating `$HOME/.marsoul` failed with: ", err)
-			os.Exit(1)
-		}
-
-		file, err := os.Create(filepath.Join(configPath, "resolvers"))
-		if err != nil && !os.IsExist(err) {
-			fmt.Fprintln(os.Stderr, "Creating file `$HOME/.marsoul/resolvers` failed with: ", err)
-			os.Exit(1)
-		}
+		file, err := internal.CreateConfigFile(internal.ResolversFile)
 
 		writable := strings.Join(args, "\n")
 		_, err = file.WriteString(writable)

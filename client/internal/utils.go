@@ -2,6 +2,9 @@ package internal
 
 import (
 	"fmt"
+	"os"
+	"os/user"
+	"path/filepath"
 )
 
 const (
@@ -10,10 +13,36 @@ const (
 	kb = 1024
 )
 
+const (
+	ConfigLocation = ".marsoul"
+	ResolversFile  = "resolvers"
+)
+
 type fileSizeUnits struct {
 	gb int64
 	mb int64
 	kb int64
+}
+
+func CreateConfigFile(filename string) (*os.File, error) {
+	usr, err := user.Current()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Getting User failed with: ", err)
+		os.Exit(1)
+	}
+
+	configPath := filepath.Join(usr.HomeDir, ConfigLocation)
+
+	if err = os.Mkdir(configPath, 0775); err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+
+	file, err := os.Create(filepath.Join(configPath, filename))
+	if err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+
+	return file, nil
 }
 
 func PrettyFileSize(fileSize int64) string {

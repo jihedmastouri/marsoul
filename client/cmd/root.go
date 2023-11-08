@@ -28,4 +28,5 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(saveCmd, retrCmd, initCmd)
 	saveCmd.Flags().StringP("file-path", "f", "", "a relative or an absolute path for a file")
+	saveCmd.Flags().StringP("file-path", "f", "", "a relative or an absolute path for a file to read the resolver from")
 }
