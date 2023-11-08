@@ -18,16 +18,18 @@ var saveCmd = &cobra.Command{
 	ValidArgs: []string{},
 	Version:   "v0.0.0",
 	Run: func(cmd *cobra.Command, args []string) {
-		filePath, err := cmd.Flags().GetString("file-path")
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Reading file failed with: ", err)
+		if len(args) == 0 {
+			fmt.Fprintln(os.Stderr, "No file Provided")
 			os.Exit(1)
 		}
 
-		err = pkg.Save(filePath)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "File failed to save with:", err)
-			os.Exit(1)
+		for _, arg := range args {
+			go func(filepath string) {
+				if err := pkg.Save(filepath); err != nil {
+					fmt.Fprintf(os.Stderr, "File `%s` upload failed with: %s", filepath, err)
+				}
+			}(arg)
 		}
+
 	},
 }
