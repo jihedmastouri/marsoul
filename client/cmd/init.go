@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jihedmastouri/marsoul/client/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,11 @@ var initCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			fmt.Fprintln(os.Stderr, "No resolvers passed as args")
+			os.Exit(1)
+		}
+
+		if valid, addrs := internal.ValidateAdrs(args...); !valid {
+			fmt.Fprintln(os.Stderr, "Argument passed is not a valid address: ", addrs)
 			os.Exit(1)
 		}
 
