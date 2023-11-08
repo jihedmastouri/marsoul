@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"os"
 
+	"github.com/jihedmastouri/marsoul/client/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -16,13 +17,17 @@ var saveCmd = &cobra.Command{
 	Example:   "",
 	ValidArgs: []string{},
 	Version:   "v0.0.0",
-	Run:       saveFile,
-}
+	Run: func(cmd *cobra.Command, args []string) {
+		filePath, err := cmd.Flags().GetString("file-path")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Reading file failed with: ", err)
+			os.Exit(1)
+		}
 
-func saveFile(cmd *cobra.Command, args []string) {
-	file, err := cmd.Flags().GetString("file-path")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(file)
+		err = pkg.Save(filePath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "File failed to save with:", err)
+			os.Exit(1)
+		}
+	},
 }

@@ -12,9 +12,7 @@ var retrCmd = &cobra.Command{
 	Long: `Used to retrieve a file from the file nodes
 	marsoul retr <file-id>
 	`,
-	Run: retrieveFile,
-}
-
-func retrieveFile(cmd *cobra.Command, args []string) {
-	fmt.Println("Helllllloooo")
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Helllllloooo")
+	},
 }
