@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/jihedmastouri/marsoul/client/internal"
@@ -20,6 +21,9 @@ var initCmd = &cobra.Command{
 	Example: "",
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath, err := cmd.Flags().GetString("file-path")
+
+		configDir := internal.GetConfigDir()
+		absFilePath := filepath.Join(configDir, internal.ResolversFile)
 
 		if len(args) == 0 && err != nil {
 			if len(args) == 0 {
@@ -38,26 +42,38 @@ var initCmd = &cobra.Command{
 		}
 
 		if valid, addrs := internal.ValidateAdrs(args); !valid {
-			fmt.Fprintln(os.Stderr, "Argument passed is not a valid address: ", addrs)
-			os.Exit(1)
+			errStr := fmt.Sprintf("Argument passed is not a valid address: %s", addrs)
+			helpers.ErrExit(errStr, nil)
 		}
 
-		file, err := internal.CreateConfigFile(internal.ResolversFile)
-		if err != nil {
+		if err = internal.CreateConfigFile(internal.ResolversFile); err != nil {
 			if !os.IsExist(err) {
-				fmt.Fprintln(os.Stderr, "creating config file `$HOME/.marsoul/resolvers` failed with :", err)
-				os.Exit(1)
+				errStr := fmt.Sprintf("creating file `%s` failed with: ", absFilePath)
+				helpers.ErrExit(errStr, err)
 			}
-			s, err := helpers.ReadStdin("file exists already. Would you like to (A)dd to it or (R)eplace: (A/R)")
+
+			s, err := helpers.ReadStdin("file exists already. Would you like to (A)dd to it or (R)eplace: (a/r) ")
 			if err != nil {
-				helpers.ErrExit("reading option failed", err)
+				helpers.ErrExit("reading option failed with: ", err)
+			}
+			if strings.ToLower(s) == "r" {
+				os.Truncate(absFilePath, 0)
 			}
 		}
+
+		file, err := os.OpenFile(absFilePath, os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			errStr := fmt.Sprintf("opening file `%s` failed with: ", absFilePath)
+			helpers.ErrExit(errStr, err)
+		}
+		defer file.Close()
 
 		writable := strings.Join(args, "\n")
-		_, err = file.WriteString(writable)
-		if err != nil {
-			helpers.ErrExit("writing to file `$HOME/.marsoul/resolvers` failed with: ", err)
+		writable += "\n"
+
+		if _, err = file.WriteString(writable); err != nil {
+			errStr := fmt.Sprintf("writing to file `%s` failed with: ", absFilePath)
+			helpers.ErrExit(errStr, err)
 		}
 	},
 }

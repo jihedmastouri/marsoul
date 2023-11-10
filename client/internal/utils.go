@@ -15,8 +15,8 @@ const (
 )
 
 const (
-	ConfigLocation = ".marsoul"
-	ResolversFile  = "resolvers"
+	configDir     = ".marsoul"
+	ResolversFile = "resolvers"
 )
 
 type fileSizeUnits struct {
@@ -25,32 +25,37 @@ type fileSizeUnits struct {
 	kb int64
 }
 
-// Return a function only if file exists
-func CreateConfigFile(filename string) (*os.File, error) {
+func GetConfigDir() string {
 	usr, err := user.Current()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Getting User failed with: ", err)
 		os.Exit(1)
 	}
+	return filepath.Join(usr.HomeDir, configDir)
+}
 
-	configPath := filepath.Join(usr.HomeDir, ConfigLocation)
+func CreateConfigFile(filename string) error {
+	configPath := GetConfigDir()
 	filePath := filepath.Join(configPath, filename)
 
-	f, _ := os.Open(filePath)
-	if f != nil {
-		return nil, fs.ErrExist
+	// We do this so that the file will not be truncated if it exists
+	f, err := os.Open(filePath)
+	if err == nil {
+		f.Close()
+		return fs.ErrExist
 	}
 
-	if err = os.MkdirAll(configPath, 0775); err != nil && !os.IsExist(err) {
-		return nil, err
+	if err := os.MkdirAll(configPath, 0775); err != nil && !os.IsExist(err) {
+		return err
 	}
 
 	file, err := os.Create(filePath)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	defer file.Close()
 
-	return file, nil
+	return nil
 }
 
 func PrettyFileSize(fileSize int64) string {

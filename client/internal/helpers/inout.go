@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 
 	"github.com/fatih/color"
@@ -14,12 +13,14 @@ var (
 )
 
 func ReadStdin(prompt string) (string, error) {
+	Cyan.Print(prompt)
+
 	scanner := bufio.NewScanner(os.Stdin)
-	Cyan.Println()
 	var res string
 
 	for scanner.Scan() {
 		res = scanner.Text()
+		break
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -30,6 +31,6 @@ func ReadStdin(prompt string) (string, error) {
 }
 
 func ErrExit(exitMsg string, err error) {
-	Cyan.Fprintln(os.Stderr, exitMsg, err)
+	Red.Fprintln(os.Stderr, exitMsg, err)
 	os.Exit(1)
 }

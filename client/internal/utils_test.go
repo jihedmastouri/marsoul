@@ -3,10 +3,8 @@ package internal_test
 import (
 	"math/rand"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/jihedmastouri/marsoul/client/internal"
@@ -15,23 +13,25 @@ import (
 func TestCreateConfigFile(t *testing.T) {
 	filename := "file_test.test_" + strconv.Itoa(rand.Int())
 
-	usr, err := user.Current()
-	if err != nil {
-		t.Error("Couldn't read file: ", err)
-	}
-	path := filepath.Join(usr.HomeDir, internal.ConfigLocation, filename)
+	configDir := internal.GetConfigDir()
+	path := filepath.Join(configDir, filename)
 
 	t.Log(path)
 	t.Cleanup(func() {
 		os.Remove(path)
 	})
 
-	file, err := internal.CreateConfigFile(filename)
+	err := internal.CreateConfigFile(filename)
 	if err != nil {
 		if os.IsExist(err) {
 			t.Error("file doesn't exits but got this error: ", err)
 		}
 		t.Error("could not create file: ", err)
+	}
+
+	file, err := os.OpenFile(path, os.O_WRONLY, 0644)
+	if os.IsExist(err) {
+		t.Error("opening file failed with: ", err)
 	}
 	defer file.Close()
 
@@ -45,12 +45,12 @@ func TestCreateConfigFile(t *testing.T) {
 	if err != nil {
 		t.Error("could not read from file: ", err)
 	}
-	if strings.Compare(content, string(buf)) != 0 {
-		t.Errorf("Content read is not the same. content: %s, buf: %s", content, buf)
+	if content != string(buf) {
+		t.Errorf("content read is not the same. content: %s, buf: %s", content, buf)
 	}
 
-	f, err := internal.CreateConfigFile(filename)
-	if f != nil {
+	err = internal.CreateConfigFile(filename)
+	if err == nil {
 		t.Error("file should not have been re-created")
 	}
 	if err != nil && !os.IsExist(err) {
