@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -24,6 +25,7 @@ type fileSizeUnits struct {
 	kb int64
 }
 
+// Return a function only if file exists
 func CreateConfigFile(filename string) (*os.File, error) {
 	usr, err := user.Current()
 	if err != nil {
@@ -32,13 +34,19 @@ func CreateConfigFile(filename string) (*os.File, error) {
 	}
 
 	configPath := filepath.Join(usr.HomeDir, ConfigLocation)
+	filePath := filepath.Join(configPath, filename)
 
-	if err = os.Mkdir(configPath, 0775); err != nil && !os.IsExist(err) {
+	f, _ := os.Open(filePath)
+	if f != nil {
+		return nil, fs.ErrExist
+	}
+
+	if err = os.MkdirAll(configPath, 0775); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 
-	file, err := os.Create(filepath.Join(configPath, filename))
-	if err != nil && !os.IsExist(err) {
+	file, err := os.Create(filePath)
+	if err != nil {
 		return nil, err
 	}
 
