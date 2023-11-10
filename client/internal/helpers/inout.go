@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	Cyan *color.Color = color.New(color.FgCyan)
-	Red               = color.New(color.FgRed)
+	cyan *color.Color = color.New(color.FgCyan)
+	red               = color.New(color.FgRed)
 )
 
 func ReadStdin(prompt string) (string, error) {
-	Cyan.Print(prompt)
+	cyan.Print(prompt)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	var res string
@@ -31,6 +31,6 @@ func ReadStdin(prompt string) (string, error) {
 }
 
 func ErrExit(exitMsg string, err error) {
-	Red.Fprintln(os.Stderr, exitMsg, err)
+	red.Fprintln(os.Stderr, exitMsg, err)
 	os.Exit(1)
 }

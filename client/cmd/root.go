@@ -27,4 +27,5 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(saveCmd, retrCmd, initCmd)
+	initCmd.Flags().StringP("file-path", "f", "", "copy address from a file")
 }

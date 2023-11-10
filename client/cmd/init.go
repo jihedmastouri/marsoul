@@ -27,22 +27,19 @@ var initCmd = &cobra.Command{
 
 		if len(args) == 0 && err != nil {
 			if len(args) == 0 {
-				fmt.Fprintln(os.Stderr, "No resolvers passed as args or as file")
-				os.Exit(1)
+				helpers.ErrExit("No resolvers passed as args or as file", nil)
 			}
-			fmt.Fprintln(os.Stderr, "Reading file-path failed with: ", err)
-			os.Exit(1)
+			helpers.ErrExit("Reading file-path failed with: ", err)
 		}
 
 		if filePath != "" {
-			if err := FileArgs(filePath, args); err != nil {
-				fmt.Fprintln(os.Stderr, "Reading file failed with: ", err)
-				os.Exit(1)
+			if err := FileArgs(filePath, &args); err != nil {
+				helpers.ErrExit("Reading file failed with: ", err)
 			}
 		}
 
-		if valid, addrs := internal.ValidateAdrs(args); !valid {
-			errStr := fmt.Sprintf("Argument passed is not a valid address: %s", addrs)
+		if valid, addr := internal.ValidateAdrs(args); !valid {
+			errStr := fmt.Sprintf("Argument passed is not a valid address: %s", addr)
 			helpers.ErrExit(errStr, nil)
 		}
 
@@ -69,7 +66,9 @@ var initCmd = &cobra.Command{
 		defer file.Close()
 
 		writable := strings.Join(args, "\n")
-		writable += "\n"
+		if writable != "" && !strings.HasSuffix(writable, "\n") {
+			writable += "\n"
+		}
 
 		if _, err = file.WriteString(writable); err != nil {
 			errStr := fmt.Sprintf("writing to file `%s` failed with: ", absFilePath)
@@ -78,18 +77,17 @@ var initCmd = &cobra.Command{
 	},
 }
 
-func FileArgs(filePath string, args []string) error {
+func FileArgs(filePath string, addrs *[]string) error {
 	providedFile, err := os.Open(filePath)
 	if err != nil {
 		return err
-
 	}
 	defer providedFile.Close()
 
 	scanner := bufio.NewScanner(providedFile)
 	for scanner.Scan() {
 		line := scanner.Text()
-		args = append(args, line)
+		*addrs = append(*addrs, line)
 	}
 	if err := scanner.Err(); err != nil {
 		return err
