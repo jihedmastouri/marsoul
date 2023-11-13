@@ -27,5 +27,12 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(saveCmd, retrCmd, initCmd)
-	initCmd.Flags().StringP("file-path", "f", "", "copy address from a file")
+
+	//Init
+	initCmd.Flags().StringP("file-path", "f", "", "specify a file to copy known resolvers address from.")
+
+	//Save
+	saveCmd.Flags().StringSliceP("resolvers-addrs", "a", []string{}, "manually specify a list of addresses for resolvers")
+	saveCmd.Flags().StringP("resolver-name", "n", "", "specify the name of resolver (in the know resolvers list) to use.")
+	saveCmd.Flags().BoolP("ignore-know-list", "i", false, "Stop the system from falling back to the resolvers know list if a resolver address or name was provided")
 }

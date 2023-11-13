@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jihedmastouri/marsoul/client/internal/helpers"
 	"github.com/jihedmastouri/marsoul/client/pkg"
 	"github.com/spf13/cobra"
 )
@@ -17,10 +18,18 @@ var saveCmd = &cobra.Command{
 	Example:   "",
 	ValidArgs: []string{},
 	Version:   "v0.0.0",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		adddr, _ := cmd.Flags().GetStringSlice("resolvers-addrs")
+		name, _ := cmd.Flags().GetString("resolver-name")
+
+		ignore, _ := cmd.Flags().GetBool("ignore-know-list")
+		if ignore && (len(adddr) == 0 || name == "") {
+			helpers.ErrExit("You cannot ignore know resolvers list if you don't provide any address", nil)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			fmt.Fprintln(os.Stderr, "No file Provided")
-			os.Exit(1)
+			helpers.ErrExit("No file path provided", nil)
 		}
 
 		for _, arg := range args {
