@@ -12,7 +12,7 @@ type Configs struct {
 }
 
 func initConfigs() {
-	viper.SetDefault("addr", "locahost")
+	viper.SetDefault("addr", "localhost")
 	viper.SetDefault("port", "4220")
 	viper.SetDefault("certLoc", "server-cert.pem")
 	viper.SetDefault("prvKeyLoc", "server-key.pem")
@@ -27,11 +27,16 @@ func NewConfigs() (*Configs, error) {
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			initConfigs()
-			viper.WriteConfig()
+			viper.SafeWriteConfigAs("$HOME/.marsoul/resolver.config.yaml")
 		} else {
 			return nil, err
 		}
 	}
+
+	// viper.OnConfigChange(func(in fsnotify.Event) {
+	// 	fmt.Println("file changed:",in.Name)
+	// })
+	// viper.WatchConfig()
 
 	return &Configs{
 		Addr:      viper.GetString("addr"),

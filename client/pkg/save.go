@@ -2,13 +2,15 @@ package pkg
 
 import (
 	"fmt"
-	"net"
+	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/jihedmastouri/marsoul/client/internal"
+	resolver "github.com/jihedmastouri/marsoul/resolver/pkg"
 )
 
-var lastUsedResolverAddr string
+var lastUsedFileAddr string
 
 func Save(filePath string) error {
 	file, err := os.Open(filePath)
@@ -28,17 +30,32 @@ func Save(filePath string) error {
 		return fmt.Errorf("File size limit")
 	}
 
-	l, err := net.Listen("tcp", ":2000")
+	resolverClient, err := getResolvers()
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	defer l.Close()
 
-	fmt.Println(internal.PrettyFileSize(fileStat.Size()))
+	addr, err := resolverClient.Save(resolver.SaveRqPayload{
+		FileName: fileStat.Name(),
+		Size:     int(fileStat.Size()),
+		Replicas: 3,
+		Region:   "TN",
+	})
+	log.Println(addr)
 
 	return err
 }
 
-func getResolvers() {
+func getResolvers() (*resolver.DefaultClient, error) {
+	certPath, err := filepath.Abs("../resolver/server-cert.pem")
+	if err != nil {
+		return nil, err
+	}
 
+	keyPath, err := filepath.Abs("../resolver/server-key.pem")
+	if err != nil {
+		return nil, err
+	}
+
+	return resolver.NewClient("localhost:4220", certPath, keyPath), nil
 }

@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/jihedmastouri/marsoul/client/internal/helpers"
 	"github.com/spf13/cobra"
 )
 

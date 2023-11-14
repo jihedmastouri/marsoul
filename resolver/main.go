@@ -17,6 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println(config)
 
 	cert, err := tls.LoadX509KeyPair(config.CertLoc, config.PrvKeyLoc)
 	if err != nil {
@@ -51,6 +52,7 @@ func HandleConn(conn net.Conn) {
 	}
 
 	msgType := pkg.MessageType(header[0])
+	log.Println(msgType)
 
 	switch msgType {
 	case pkg.SaveRq:
@@ -60,10 +62,9 @@ func HandleConn(conn net.Conn) {
 		}
 
 		var payload pkg.SaveRqPayload
-		json.Unmarshal(buf[1:], &payload)
+		json.Unmarshal(buf, &payload)
 
 		fmt.Println(payload)
-
 	case pkg.RetrRq:
 		buf, err := io.ReadAll(conn)
 		if err != nil {
@@ -84,4 +85,5 @@ func HandleConn(conn net.Conn) {
 	if _, err := conn.Write([]byte("bye")); err != nil {
 		log.Fatal(err)
 	}
+	conn.Close()
 }

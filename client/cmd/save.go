@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"os"
+	"sync"
 
 	"github.com/jihedmastouri/marsoul/client/internal/helpers"
 	"github.com/jihedmastouri/marsoul/client/pkg"
@@ -32,13 +32,17 @@ var saveCmd = &cobra.Command{
 			helpers.ErrExit("No file path provided", nil)
 		}
 
+		wg := sync.WaitGroup{}
 		for _, arg := range args {
+			wg.Add(1)
 			go func(filepath string) {
 				if err := pkg.Save(filepath); err != nil {
-					fmt.Fprintf(os.Stderr, "File `%s` upload failed with: %s", filepath, err)
+					errStr := fmt.Sprintf("File `%s` upload failed with: ", filepath)
+					helpers.ErrExit(errStr, err)
 				}
+				wg.Done()
 			}(arg)
 		}
-
+		wg.Wait()
 	},
 }

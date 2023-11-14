@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 )
 
 type ClientRequester interface {
-	Save() string
-	Retr() string
+	Save(SaveRqPayload) (string, error)
+	Retr(RetrRqPayload) (string, error)
 }
 
 type DefaultClient struct {
@@ -31,7 +32,7 @@ func NewClient(addr, certFile, keyFile string) *DefaultClient {
 }
 
 func (c *DefaultClient) Save(payload SaveRqPayload) (string, error) {
-	fileNodeAddr, err := appDial(c.resolverAddr, c.cert, payload)
+	fileNodeAddr, err := appDial(c.resolverAddr, SaveRq, c.cert, payload)
 	if err != nil {
 		return "", err
 	}
@@ -40,7 +41,7 @@ func (c *DefaultClient) Save(payload SaveRqPayload) (string, error) {
 }
 
 func (c *DefaultClient) Retr(payload RetrRqPayload) (string, error) {
-	fileNodeAddr, err := appDial(c.resolverAddr, c.cert, payload)
+	fileNodeAddr, err := appDial(c.resolverAddr, RetrRq, c.cert, payload)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +49,7 @@ func (c *DefaultClient) Retr(payload RetrRqPayload) (string, error) {
 	return fileNodeAddr, nil
 }
 
-func appDial[Payload SaveRqPayload | RetrRqPayload](addr string, cert tls.Certificate, payload Payload) (string, error) {
+func appDial[Payload SaveRqPayload | RetrRqPayload](addr string, header MessageType, cert tls.Certificate, payload Payload) (string, error) {
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
 		Certificates:       []tls.Certificate{cert},
@@ -65,13 +66,14 @@ func appDial[Payload SaveRqPayload | RetrRqPayload](addr string, cert tls.Certif
 		return "", err
 	}
 
+	b = append([]byte{byte(header)}, b...)
 	n, err := conn.Write([]byte(b))
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("error: %s on byte: %d", err, n))
 	}
+	conn.CloseWrite()
 
-	buf := make([]byte, 100)
-	n, err = conn.Read(buf)
+	buf, err := io.ReadAll(conn)
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("error: %s on byte: %d", err, n))
 	}
