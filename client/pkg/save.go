@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/jihedmastouri/marsoul/client/internal"
-	resolver "github.com/jihedmastouri/marsoul/resolver/pkg"
+	resolver "github.com/jihedmastouri/marsoul/resolver/transport"
 )
 
 var lastUsedFileAddr string

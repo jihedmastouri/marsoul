@@ -1,4 +1,4 @@
-package pkg
+package transport
 
 type MessageType int8
 
@@ -17,4 +17,18 @@ type SaveRqPayload struct {
 
 type RetrRqPayload struct {
 	Id string `json:"0"`
+}
+
+type Response struct {
+	Ok           bool   `json:"0"`
+	FileNodeAddr string `json:"1"`
+	Secret       string `json:"2"`
+}
+
+type SaveResponse struct {
+	Response
+}
+
+type RetrResponse struct {
+	Response
 }

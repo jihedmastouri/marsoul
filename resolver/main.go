@@ -2,14 +2,13 @@ package main
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net"
 
 	"github.com/jihedmastouri/marsoul/resolver/internal"
-	"github.com/jihedmastouri/marsoul/resolver/pkg"
+	"github.com/jihedmastouri/marsoul/resolver/transport"
 )
 
 func main() {
@@ -51,35 +50,29 @@ func HandleConn(conn net.Conn) {
 		log.Fatal(err)
 	}
 
-	msgType := pkg.MessageType(header[0])
+	msgType := transport.MessageType(header[0])
 	log.Println(msgType)
 
 	switch msgType {
-	case pkg.SaveRq:
-		buf, err := io.ReadAll(conn)
-		if err != nil {
+	case transport.SaveRq:
+		var payload transport.SaveRqPayload
+		if err = transport.Decode(&conn, &payload); err != nil {
 			log.Fatal(err)
 		}
-
-		var payload pkg.SaveRqPayload
-		json.Unmarshal(buf, &payload)
-
 		fmt.Println(payload)
-	case pkg.RetrRq:
-		buf, err := io.ReadAll(conn)
-		if err != nil {
+
+	case transport.RetrRq:
+		var payload transport.RetrRqPayload
+		if err = transport.Decode(&conn, &payload); err != nil {
 			log.Fatal(err)
 		}
-
-		var payload pkg.RetrRqPayload
-		json.Unmarshal(buf[1:], &payload)
-
 		fmt.Println(payload)
 
-	case pkg.Ping:
+	case transport.Ping:
 		if _, err := conn.Write([]byte("Pong")); err != nil {
 			log.Fatal(err)
 		}
+
 	}
 
 	if _, err := conn.Write([]byte("bye")); err != nil {

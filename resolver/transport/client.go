@@ -1,4 +1,4 @@
-package pkg
+package transport
 
 import (
 	"crypto/tls"
